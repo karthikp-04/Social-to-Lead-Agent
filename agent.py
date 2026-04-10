@@ -16,18 +16,19 @@ from rag import build_vector_store, get_retriever, retrieve_context
 class AgentState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], add_messages]
 
-def create_agent():
+def create_agent(api_key: str):
 
     llm = ChatGoogleGenerativeAI(
         model="gemini-2.5-flash",
         temperature=0.3,
+        google_api_key=api_key
     )
 
     tools = [mock_lead_capture]
     llm_with_tools = llm.bind_tools(tools)
 
     print("Building knowledge base...")
-    vector_store = build_vector_store()
+    vector_store = build_vector_store(api_key)
     retriever = get_retriever(vector_store)
     print("Knowledge base ready!\n")
 
@@ -41,12 +42,15 @@ def create_agent():
                 latest_user_msg = msg.content
                 break
 
+        print("[DEBUG] Fetching RAG context for:", latest_user_msg)
         # Retrieve relevant context from knowledge base
         context = retrieve_context(retriever, latest_user_msg)
+        print("[DEBUG] RAG context fetched.")
 
         # Build the system message with RAG context injected
         system_msg = SystemMessage(content=SYSTEM_PROMPT.format(context=context))
 
+        print("[DEBUG] Invoking Gemini model...")
         # Invoke LLM with retry logic for rate limits
         max_retries = 3
         for attempt in range(max_retries):

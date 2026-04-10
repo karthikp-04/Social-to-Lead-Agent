@@ -5,7 +5,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 
-def build_vector_store():
+def build_vector_store(api_key: str):
 
     # Get the directory where this script lives
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -25,7 +25,8 @@ def build_vector_store():
 
     # Create embeddings and build FAISS index
     embeddings = GoogleGenerativeAIEmbeddings(
-        model="models/gemini-embedding-001"
+        model="models/gemini-embedding-001",
+        google_api_key=api_key
     )
     vector_store = FAISS.from_documents(chunks, embeddings)
 

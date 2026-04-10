@@ -13,7 +13,7 @@ from agent import create_agent
 
 def main():
     # Load environment variables (.env file with GOOGLE_API_KEY)
-    load_dotenv()
+    load_dotenv(override=True)
 
     # Verify API key is set
     if not os.getenv("GOOGLE_API_KEY"):
@@ -27,7 +27,8 @@ def main():
     print("🚀 AutoStream AI Agent")
     print("=" * 50)
 
-    agent = create_agent()
+    api_key = os.getenv("GOOGLE_API_KEY")
+    agent = create_agent(api_key)
 
     # Configuration for memory persistence (same thread_id = same conversation)
     config = {"configurable": {"thread_id": "autostream-session-1"}}
@@ -57,7 +58,23 @@ def main():
 
         # Extract and display the agent's response
         ai_message = response["messages"][-1]
-        print(f"\n🤖 Ava: {ai_message.content}")
+        content = ai_message.content
+        
+        # Sometime LangChain returns Gemini responses as a stringified list of dicts
+        if isinstance(content, str) and content.startswith("[{") and "'text':" in content:
+            import ast
+            try:
+                parsed_list = ast.literal_eval(content)
+                text_parts = [block["text"] for block in parsed_list if isinstance(block, dict) and "text" in block]
+                content = "\n".join(text_parts)
+            except Exception:
+                pass
+        elif isinstance(content, list):
+            # If it's a raw python list
+            text_parts = [block.get("text", "") for block in content if isinstance(block, dict)]
+            content = "\n".join(text_parts)
+
+        print(f"\n🤖 Ava: {content}")
 
 
 if __name__ == "__main__":
