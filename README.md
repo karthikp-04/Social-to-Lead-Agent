@@ -1,6 +1,6 @@
-# AutoStream – Social-to-Lead Agentic Workflow
+# Social-to-Lead Agentic Workflow
 
-A conversational AI agent for **AutoStream**, a fictional SaaS product that provides automated video editing tools for content creators. The agent identifies user intent, answers product questions using RAG, and captures qualified leads through natural conversation.
+An AI agent for AutoStream that converts social media conversations into qualified business leads. It implements intent detection, answers product questions using a local knowledge base (RAG), and handles lead capture via mock API tool execution.
 
 ## Features
 
@@ -70,19 +70,15 @@ python main.py
 🤖 Ava: You're all set! Our team will reach out shortly to help you get started with the Pro plan.
 ```
 
-## Architecture Explanation (~200 words)
+## Architecture Explanation
 
-This project uses **LangGraph** as the orchestration framework because it provides explicit, graph-based control over the agent's workflow — unlike simple chain-based approaches, LangGraph lets us define distinct nodes (agent reasoning, tool execution) with conditional routing between them, making the intent → RAG → lead capture flow transparent and debuggable.
+Here's a quick breakdown of how things are structured under the hood (about 200 words).
 
-The architecture is built around a **StateGraph** with two nodes:
+I decided to go with **LangGraph** instead of AutoGen or raw LangChain because it's much better suited for routing logic. A lead capture agent needs to strictly control when it's just chatting versus when it's actively pulling user data. LangGraph lets us define this as a state machine. We have an "Agent Node" that does the reasoning and intent detection, and a separate "Tool Node" that handles the actual function execution (`mock_lead_capture`). We can easily set conditional edges so the tool node only triggers when the LLM explicitly requests it.
 
-1. **Agent Node** – Invokes Google's Gemini 2.0 Flash LLM with the full conversation history and dynamically retrieved RAG context. The system prompt instructs the LLM to classify intent and follow a strict lead qualification protocol.
+For **State Management**, I didn't want to overcomplicate things with external databases. LangGraph has a built-in `MemorySaver` checkpointer that I'm using alongside a `TypedDict` for the agent's state. It basically intercepts every message in the conversation and appends it to a message history array. By passing a `thread_id` in the run config, the agent remembers the entire context of the chat—meaning it won't ask for a user's name if they already provided it two turns ago. 
 
-2. **Tool Node** – Uses LangGraph's pre-built `ToolNode` to execute `mock_lead_capture()` only when the LLM explicitly requests it (after collecting all three required fields).
-
-**State management** uses LangGraph's `MemorySaver` checkpointer with the `add_messages` reducer. Each conversation turn appends to the message history rather than overwriting it, preserving full context across 5-6+ turns. A `thread_id` in the config ties all turns to the same session.
-
-**RAG** is implemented using FAISS as a local vector store with Google's embedding model. The knowledge base (`knowledge_base.md`) is split into semantic chunks and embedded at startup, enabling accurate retrieval of pricing, features, and policy information.
+Finally, the RAG setup is just a simple local FAISS vector store that gets queried via Google Embeddings before each LLM call.
 
 ## WhatsApp Deployment
 

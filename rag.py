@@ -1,10 +1,3 @@
-"""
-AutoStream – RAG Pipeline
-
-Loads the knowledge base, splits it into chunks, creates embeddings,
-and stores them in a FAISS vector store for semantic retrieval.
-"""
-
 import os
 from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -13,7 +6,6 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 
 def build_vector_store():
-    """Load knowledge_base.md, split into chunks, embed, and return a FAISS vector store."""
 
     # Get the directory where this script lives
     base_dir = os.path.dirname(os.path.abspath(__file__))

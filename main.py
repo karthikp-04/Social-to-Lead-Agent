@@ -57,15 +57,7 @@ def main():
 
         # Extract and display the agent's response
         ai_message = response["messages"][-1]
-
-        # Handle both string and list-of-dicts content formats
-        content = ai_message.content
-        if isinstance(content, list):
-            # Gemini returns content as [{'type': 'text', 'text': '...', ...}]
-            text_parts = [block["text"] for block in content if isinstance(block, dict) and "text" in block]
-            content = "\n".join(text_parts)
-
-        print(f"\n🤖 Ava: {content}")
+        print(f"\n🤖 Ava: {ai_message.content}")
 
 
 if __name__ == "__main__":
